@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorer Interaktif EEG: Sapi Betina</title>
+    <!-- Chosen Palette: Clinical Calm -->
+    <!-- Application Structure Plan: The application uses a top-down, section-based flow. It starts with general information (What is EEG, Brainwaves) and moves to a specific, interactive simulation (Cow EEG). This structure guides the user from foundational knowledge to practical application, enhancing learning. The core is the interactive dashboard which allows direct comparison of different brain states, making the report's key findings tangible and easy to understand. -->
+    <!-- Visualization & Content Choices: Report Info: EEG basics -> Goal: Inform -> Presentation: Text sections with clear headings. Report Info: Brainwave types -> Goal: Organize/Inform -> Presentation: Interactive cards with sample waveforms -> Interaction: Click to view details -> Justification: More engaging than a static list. Report Info: Cow brain states comparison -> Goal: Compare/Show Change -> Presentation: Side-by-side dynamic waveform (Canvas) and frequency spectrum (Chart.js bar chart) -> Interaction: Buttons to switch states -> Justification: Allows direct, interactive comparison which is the core of the report's message. Chart.js is used for the bar chart for its dynamic capabilities and Canvas rendering. Custom JS/Canvas is used for the waveform to allow for more control over the simulation. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #c7e8f5; /* light blue for cartoon pasture effect */
+            color: #334155; /* slate-700 */
+        }
+        .card {
+            background-image: url('bg.jpg');
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .control-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .control-button.active {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            box-shadow: 0 4px 14px 0 rgb(0 118 255 / 39%);
+        }
+        .control-button:not(.active) {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #475569; /* slate-600 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 280px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 320px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-2">Explorer Interaktif EEG</h1>
+            <p class="text-lg text-slate-600">Memahami Aktivitas Otak Sapi Betina 🐄</p>
+        </header>
+
+        <main>
+            <section id="intro" class="mb-16">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="card p-8">
+                        <h2 class="text-2xl font-bold text-blue-600 mb-4">Apa itu EEG? 🧠</h2>
+                        <p class="text-slate-600 leading-relaxed">
+                            <strong>Electroencephalography (EEG)</strong> adalah teknik non-invasif yang digunakan untuk merekam aktivitas listrik di otak. Dengan menempatkan elektroda di kulit kepala, kita dapat mendeteksi dan mengukur sinyal listrik yang dihasilkan oleh miliaran neuron. Ini membantu kita memahami bagaimana otak bekerja dalam berbagai kondisi, dari tidur nyenyak hingga konsentrasi penuh.
+                        </p>
+                    </div>
+                    <div class="card p-8">
+                        <h2 class="text-2xl font-bold text-blue-600 mb-4">Bagaimana Cara Kerjanya? ⚡️</h2>
+                        <p class="text-slate-600 leading-relaxed">
+                            Elektroda kecil di permukaan kepala mendeteksi impuls listrik yang sangat lemah. Sinyal ini kemudian diperkuat dan dicatat sebagai <strong>gelombang otak</strong>. Pola gelombang yang terekam memberikan informasi berharga tentang status fungsional otak, seperti tingkat kesadaran, siklus tidur, dan aktivitas kognitif lainnya.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="brainwaves" class="mb-16 text-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">Frekuensi Gelombang Otak Utama</h2>
+                <p class="text-slate-600 mb-8 max-w-2xl mx-auto">Setiap gelombang otak memiliki frekuensi dan karakteristik yang terkait dengan keadaan mental yang berbeda. Klik untuk melihat detailnya.</p>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="card p-4 text-center cursor-pointer wave-card" data-wave="delta">
+                        <div class="text-4xl mb-2">Δ</div>
+                        <h3 class="font-bold text-lg">Delta</h3>
+                        <p class="text-sm text-slate-500">0.5 - 4 Hz</p>
+                    </div>
+                    <div class="card p-4 text-center cursor-pointer wave-card" data-wave="theta">
+                        <div class="text-4xl mb-2">Θ</div>
+                        <h3 class="font-bold text-lg">Theta</h3>
+                        <p class="text-sm text-slate-500">4 - 8 Hz</p>
+                    </div>
+                    <div class="card p-4 text-center cursor-pointer wave-card" data-wave="alpha">
+                        <div class="text-4xl mb-2">Α</div>
+                        <h3 class="font-bold text-lg">Alpha</h3>
+                        <p class="text-sm text-slate-500">8 - 13 Hz</p>
+                    </div>
+                    <div class="card p-4 text-center cursor-pointer wave-card" data-wave="beta">
+                        <div class="text-4xl mb-2">Β</div>
+                        <h3 class="font-bold text-lg">Beta</h3>
+                        <p class="text-sm text-slate-500">13 - 30 Hz</p>
+                    </div>
+                     <div class="card p-4 text-center cursor-pointer wave-card col-span-2 md:col-span-1" data-wave="gamma">
+                        <div class="text-4xl mb-2">Γ</div>
+                        <h3 class="font-bold text-lg">Gamma</h3>
+                        <p class="text-sm text-slate-500">> 30 Hz</p>
+                    </div>
+                </div>
+                 <div id="wave-info" class="mt-6 card p-6 text-left hidden">
+                    <h4 id="wave-title" class="font-bold text-xl text-blue-600"></h4>
+                    <p id="wave-description" class="text-slate-600 mt-2"></p>
+                </div>
+            </section>
+
+            <section id="simulation" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-slate-800 text-center mb-2">Simulasi EEG Otak Sapi Betina</h2>
+                <p class="text-slate-600 text-center mb-8 max-w-3xl mx-auto">Pilih kondisi sapi untuk melihat bagaimana aktivitas otaknya berubah secara real-time. Perhatikan perubahan pada bentuk gelombang dan spektrum frekuensinya.</p>
+
+                <div class="flex justify-center space-x-2 sm:space-x-4 mb-8">
+                    <button id="btn-closed" class="control-button active text-sm sm:text-base font-semibold py-2 px-4 rounded-lg" data-state="closed">Mata Tertutup (Istirahat)</button>
+                    <button id="btn-open" class="control-button text-sm sm:text-base font-semibold py-2 px-4 rounded-lg" data-state="open">Mata Terbuka (Waspada)</button>
+                    <button id="btn-sleep" class="control-button text-sm sm:text-base font-semibold py-2 px-4 rounded-lg" data-state="sleep">Tidur Nyenyak</button>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="font-semibold text-center text-slate-700 mb-2">Live Waveform Sinyal EEG</h3>
+                        <div class="chart-container bg-slate-100 rounded-lg">
+                            <canvas id="waveformCanvas"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-center text-slate-700 mb-2">Analisis Spektrum Frekuensi</h3>
+                        <div class="chart-container">
+                            <canvas id="spectrumChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="explanation-box" class="mt-8 card bg-blue-50 border border-blue-200 p-6">
+                    <h3 id="explanation-title" class="font-bold text-xl text-blue-700 mb-2"></h3>
+                    <p id="explanation-text" class="text-blue-800 leading-relaxed"></p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 text-sm text-slate-500">
+            <p>Aplikasi ini dibuat untuk tujuan edukasi berdasarkan data dan prinsip umum EEG pada mamalia.</p>
+            <p>&copy; 2025 Explorer Interaktif EEG.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const waveData = {
+                delta: { title: 'Δ Delta (0.5 - 4 Hz)', description: 'Sering dikaitkan dengan tidur nyenyak tanpa mimpi. Ini adalah gelombang otak paling lambat dan memiliki amplitudo tertinggi.' },
+                theta: { title: 'Θ Theta (4 - 8 Hz)', description: 'Terjadi selama kantuk, meditasi ringan, atau tahap awal tidur (NREM). Juga terkait dengan kreativitas dan kondisi emosional.' },
+                alpha: { title: 'Α Alpha (8 - 13 Hz)', description: 'Dominan saat dalam kondisi rileks dengan mata tertutup. Gelombang ini menurun saat mata terbuka atau saat mulai berkonsentrasi.' },
+                beta: { title: 'Β Beta (13 - 30 Hz)', description: 'Terkait dengan kondisi terjaga, waspada, berpikir aktif, dan konsentrasi. Ini adalah gelombang dominan saat kita aktif secara mental.' },
+                gamma: { title: 'Γ Gamma (> 30 Hz)', description: 'Terkait dengan pemrosesan kognitif tingkat tinggi, persepsi, dan pembelajaran. Ini adalah gelombang tercepat.' }
+            };
+
+            const waveCards = document.querySelectorAll('.wave-card');
+            const waveInfoBox = document.getElementById('wave-info');
+            const waveTitle = document.getElementById('wave-title');
+            const waveDescription = document.getElementById('wave-description');
+
+            waveCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const wave = card.dataset.wave;
+                    waveTitle.textContent = waveData[wave].title;
+                    waveDescription.textContent = waveData[wave].description;
+                    waveInfoBox.classList.remove('hidden');
+                });
+            });
+
+            const stateData = {
+                closed: {
+                    title: 'Kondisi: Mata Tertutup (Istirahat/Rileks)',
+                    text: 'Sapi dalam keadaan rileks dengan sedikit stimulus eksternal. Perhatikan bagaimana **gelombang Alpha (8-13 Hz)** menjadi dominan. Ini menandakan keadaan istirahat yang tenang. Gelombang terlihat lebih teratur dengan amplitudo yang relatif tinggi.',
+                    spectrum: [3, 5, 9, 4], // Delta, Theta, Alpha, Beta
+                    waveParams: { freqs: [10, 5, 18], amps: [1.2, 0.4, 0.2], noise: 0.2 }
+                },
+                open: {
+                    title: 'Kondisi: Mata Terbuka (Aktif/Waspada)',
+                    text: 'Otak sapi aktif memproses informasi visual dan lingkungan. Terjadi fenomena **"Alpha Blockade"** di mana kekuatan gelombang Alpha menurun drastis, dan **gelombang Beta (13-30 Hz)** meningkat. Ini menunjukkan keadaan waspada dan fokus.',
+                    spectrum: [2, 4, 3, 8],
+                    waveParams: { freqs: [20, 10, 6], amps: [1.0, 0.3, 0.3], noise: 0.3 }
+                },
+                sleep: {
+                    title: 'Kondisi: Tidur Nyenyak',
+                    text: 'Pada tahap tidur nyenyak (NREM), aktivitas otak melambat secara signifikan. **Gelombang Delta (0.5-4 Hz)** menjadi sangat dominan. Gelombang ini memiliki frekuensi paling lambat namun amplitudo tertinggi, menandakan istirahat restoratif.',
+                    spectrum: [10, 6, 2, 1],
+                    waveParams: { freqs: [2, 5], amps: [1.5, 0.5], noise: 0.15 }
+                }
+            };
+
+            let currentState = 'closed';
+            let spectrumChart;
+            let animationFrameId;
+
+            const waveformCanvas = document.getElementById('waveformCanvas');
+            const waveformCtx = waveformCanvas.getContext('2d');
+            
+            function resizeCanvas() {
+                const container = waveformCanvas.parentElement;
+                waveformCanvas.width = container.clientWidth;
+                waveformCanvas.height = container.clientHeight;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+
+            function drawWaveform() {
+                const params = stateData[currentState].waveParams;
+                const width = waveformCanvas.width;
+                const height = waveformCanvas.height;
+                const midY = height / 2;
+                const time = Date.now() / 500;
+
+                waveformCtx.clearRect(0, 0, width, height);
+                waveformCtx.beginPath();
+                waveformCtx.strokeStyle = '#3b82f6';
+                waveformCtx.lineWidth = 1.5;
+
+                for (let x = 0; x < width; x++) {
+                    let y = 0;
+                    for (let i = 0; i < params.freqs.length; i++) {
+                        y += Math.sin(x / (width / (params.freqs[i] * Math.PI)) + time) * params.amps[i];
+                    }
+                    y += (Math.random() - 0.5) * params.noise;
+                    
+                    const scaledY = midY - y * (height / 8);
+                    if (x === 0) {
+                        waveformCtx.moveTo(x, scaledY);
+                    } else {
+                        waveformCtx.lineTo(x, scaledY);
+                    }
+                }
+                waveformCtx.stroke();
+                animationFrameId = requestAnimationFrame(drawWaveform);
+            }
+            
+            function createSpectrumChart() {
+                const ctx = document.getElementById('spectrumChart').getContext('2d');
+                spectrumChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Δ Delta', 'Θ Theta', 'Α Alpha', 'Β Beta'],
+                        datasets: [{
+                            label: 'Kekuatan Relatif',
+                            data: stateData[currentState].spectrum,
+                            backgroundColor: [
+                                'rgba(239, 68, 68, 0.6)',
+                                'rgba(249, 115, 22, 0.6)',
+                                'rgba(234, 179, 8, 0.6)',
+                                'rgba(34, 197, 94, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(239, 68, 68, 1)',
+                                'rgba(249, 115, 22, 1)',
+                                'rgba(234, 179, 8, 1)',
+                                'rgba(34, 197, 94, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Kekuatan' },
+                                suggestedMax: 12
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Kekuatan: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateUI(state) {
+                currentState = state;
+                
+                document.querySelectorAll('.control-button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.state === state);
+                });
+
+                const data = stateData[state];
+                document.getElementById('explanation-title').textContent = data.title;
+                document.getElementById('explanation-text').innerHTML = data.text;
+
+                spectrumChart.data.datasets[0].data = data.spectrum;
+                spectrumChart.update();
+
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                drawWaveform();
+            }
+
+            document.querySelectorAll('.control-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    updateUI(btn.dataset.state);
+                });
+            });
+
+            createSpectrumChart();
+            updateUI('closed');
+        });
+    </script>
+</body>
+</html>
