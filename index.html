@@ -156,11 +156,10 @@
             <p>Aplikasi ini dibuat untuk tujuan edukasi berdasarkan data dan prinsip umum EEG pada mamalia.</p>
             <p>&copy; 2025 Explorer Interaktif EEG.</p>
         </footer>
-
-    </div>
-    <!-- POPUP VIDEO -->
+<!-- POPUP VIDEO (draggable) -->
 <div id="videoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-  <div class="bg-black rounded-xl overflow-hidden relative w-1/4 h-1/4">
+  <div id="videoBox" 
+       class="bg-black rounded-xl overflow-hidden relative w-1/4 h-1/4 cursor-move">
     <button id="closeVideo" class="absolute top-1 right-2 text-white text-xl">&times;</button>
     <iframe id="youtubeFrame" 
             class="w-full h-full" 
@@ -174,10 +173,10 @@
 
 <script>
   const videoModal = document.getElementById("videoModal");
+  const videoBox = document.getElementById("videoBox");
   const closeVideo = document.getElementById("closeVideo");
   const youtubeFrame = document.getElementById("youtubeFrame");
 
-  // Ganti VIDEO_ID dengan ID video YouTube
   const videoURL = "https://www.youtube.com/embed/QCDTDJuLQ3k?autoplay=1";
 
   // --- Muncul otomatis saat halaman dibuka ---
@@ -199,7 +198,33 @@
       youtubeFrame.src = "";
     }
   });
+
+  // --- Draggable ---
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  videoBox.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    offsetX = e.clientX - videoBox.getBoundingClientRect().left;
+    offsetY = e.clientY - videoBox.getBoundingClientRect().top;
+    videoBox.style.position = "absolute"; 
+    videoBox.style.zIndex = 1000;
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      videoBox.style.left = e.clientX - offsetX + "px";
+      videoBox.style.top = e.clientY - offsetY + "px";
+    }
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
 </script>
+
+  
+
 
 
     <script>
