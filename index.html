@@ -158,6 +158,49 @@
         </footer>
 
     </div>
+    <!-- POPUP VIDEO -->
+<div id="videoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-black rounded-xl overflow-hidden relative w-1/4 h-1/4">
+    <button id="closeVideo" class="absolute top-1 right-2 text-white text-xl">&times;</button>
+    <iframe id="youtubeFrame" 
+            class="w-full h-full" 
+            src="" 
+            frameborder="0" 
+            allow="autoplay; encrypted-media" 
+            allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<script>
+  const videoModal = document.getElementById("videoModal");
+  const closeVideo = document.getElementById("closeVideo");
+  const youtubeFrame = document.getElementById("youtubeFrame");
+
+  // Ganti VIDEO_ID dengan ID video YouTube
+  const videoURL = "https://www.youtube.com/embed/QCDTDJuLQ3k?autoplay=1";
+
+  // --- Muncul otomatis saat halaman dibuka ---
+  window.addEventListener("load", () => {
+    videoModal.classList.remove("hidden");
+    youtubeFrame.src = videoURL;
+  });
+
+  // --- Tombol close ---
+  closeVideo.addEventListener("click", () => {
+    videoModal.classList.add("hidden");
+    youtubeFrame.src = ""; // stop video
+  });
+
+  // Tutup kalau klik luar area video
+  videoModal.addEventListener("click", (e) => {
+    if (e.target === videoModal) {
+      videoModal.classList.add("hidden");
+      youtubeFrame.src = "";
+    }
+  });
+</script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
